@@ -1,0 +1,353 @@
+<Window x:Class="QuestCreater_WPF.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="SPT Quest Creator" Height="920" Width="1500" MinHeight="760" MinWidth="1120"
+        Background="#111418" WindowStartupLocation="CenterScreen">
+    <Window.Resources>
+        <SolidColorBrush x:Key="PanelBrush" Color="#191d23"/>
+        <SolidColorBrush x:Key="PanelAltBrush" Color="#20252d"/>
+        <SolidColorBrush x:Key="BorderBrushSoft" Color="#303845"/>
+        <SolidColorBrush x:Key="TextBrush" Color="#e8edf3"/>
+        <SolidColorBrush x:Key="MutedBrush" Color="#9ba7b6"/>
+        <SolidColorBrush x:Key="AccentBrush" Color="#52b69a"/>
+        <Style TargetType="TextBlock">
+            <Setter Property="Foreground" Value="{StaticResource TextBrush}"/>
+            <Setter Property="VerticalAlignment" Value="Center"/>
+        </Style>
+        <Style TargetType="Label">
+            <Setter Property="Foreground" Value="{StaticResource MutedBrush}"/>
+            <Setter Property="Padding" Value="0,0,0,4"/>
+        </Style>
+        <Style TargetType="TextBox">
+            <Setter Property="Background" Value="#0f1216"/>
+            <Setter Property="Foreground" Value="{StaticResource TextBrush}"/>
+            <Setter Property="BorderBrush" Value="{StaticResource BorderBrushSoft}"/>
+            <Setter Property="CaretBrush" Value="{StaticResource TextBrush}"/>
+            <Setter Property="Padding" Value="8,6"/>
+            <Setter Property="MinHeight" Value="32"/>
+        </Style>
+        <Style TargetType="ComboBox">
+            <Setter Property="Background" Value="#0f1216"/>
+            <Setter Property="Foreground" Value="#111418"/>
+            <Setter Property="BorderBrush" Value="{StaticResource BorderBrushSoft}"/>
+            <Setter Property="MinHeight" Value="32"/>
+            <Setter Property="Padding" Value="6,4"/>
+        </Style>
+        <Style TargetType="Button">
+            <Setter Property="Background" Value="#26303a"/>
+            <Setter Property="Foreground" Value="{StaticResource TextBrush}"/>
+            <Setter Property="BorderBrush" Value="#3a4654"/>
+            <Setter Property="Padding" Value="12,7"/>
+            <Setter Property="MinHeight" Value="34"/>
+            <Setter Property="Cursor" Value="Hand"/>
+        </Style>
+        <Style TargetType="TabControl">
+            <Setter Property="Background" Value="{StaticResource PanelBrush}"/>
+            <Setter Property="BorderBrush" Value="{StaticResource BorderBrushSoft}"/>
+        </Style>
+        <Style TargetType="TabItem">
+            <Setter Property="Foreground" Value="#111418"/>
+            <Setter Property="Padding" Value="14,8"/>
+        </Style>
+        <Style TargetType="DataGrid">
+            <Setter Property="Background" Value="#0f1216"/>
+            <Setter Property="Foreground" Value="{StaticResource TextBrush}"/>
+            <Setter Property="RowBackground" Value="#151a20"/>
+            <Setter Property="AlternatingRowBackground" Value="#11161b"/>
+            <Setter Property="GridLinesVisibility" Value="Horizontal"/>
+            <Setter Property="HorizontalGridLinesBrush" Value="#29313b"/>
+            <Setter Property="BorderBrush" Value="{StaticResource BorderBrushSoft}"/>
+            <Setter Property="HeadersVisibility" Value="Column"/>
+            <Setter Property="CanUserAddRows" Value="False"/>
+            <Setter Property="AutoGenerateColumns" Value="False"/>
+        </Style>
+    </Window.Resources>
+
+    <DockPanel>
+        <Border DockPanel.Dock="Top" Background="#15191f" BorderBrush="{StaticResource BorderBrushSoft}" BorderThickness="0,0,0,1" Padding="14,10">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+                <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                    <TextBlock Text="SPT Quest Creator" FontSize="22" FontWeight="SemiBold" Margin="0,0,18,0"/>
+                    <Button Content="Load Tarkynator" Click="LoadTarkynator_Click" Margin="0,0,8,0"/>
+                    <Button Content="Load Local SPT" Click="LoadLocalSpt_Click" Margin="0,0,8,0"/>
+                    <Button Content="Import JSON" Click="ImportJson_Click" Margin="0,0,8,0"/>
+                    <Button Content="New Quest" Click="NewQuest_Click" Margin="0,0,8,0"/>
+                    <Button Content="Clone Selected" Click="CloneSelected_Click" Margin="0,0,8,0"/>
+                    <Button Content="Export Quest.json" Click="ExportJson_Click"/>
+                </StackPanel>
+                <TextBlock x:Name="StatusText" Grid.Column="1" Foreground="{StaticResource MutedBrush}" Text="Ready" Margin="16,0,0,0"/>
+            </Grid>
+        </Border>
+
+        <Grid Margin="12">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="360"/>
+                <ColumnDefinition Width="12"/>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="12"/>
+                <ColumnDefinition Width="470"/>
+            </Grid.ColumnDefinitions>
+
+            <Border Grid.Column="0" Background="{StaticResource PanelBrush}" BorderBrush="{StaticResource BorderBrushSoft}" BorderThickness="1" Padding="12">
+                <DockPanel>
+                    <StackPanel DockPanel.Dock="Top">
+                        <TextBlock Text="Quest Library" FontSize="18" FontWeight="SemiBold" Margin="0,0,0,12"/>
+                        <Label Content="Search"/>
+                        <TextBox x:Name="SearchBox" TextChanged="Filter_Changed" Margin="0,0,0,8"/>
+                        <Grid Margin="0,0,0,8">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="8"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+                            <StackPanel>
+                                <Label Content="Trader"/>
+                                <ComboBox x:Name="TraderFilter" SelectionChanged="Filter_Changed"/>
+                            </StackPanel>
+                            <StackPanel Grid.Column="2">
+                                <Label Content="Map"/>
+                                <ComboBox x:Name="MapFilter" SelectionChanged="Filter_Changed"/>
+                            </StackPanel>
+                        </Grid>
+                        <Grid Margin="0,0,0,10">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="8"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+                            <StackPanel>
+                                <Label Content="Type"/>
+                                <ComboBox x:Name="TypeFilter" SelectionChanged="Filter_Changed"/>
+                            </StackPanel>
+                            <StackPanel Grid.Column="2">
+                                <Label Content="Source"/>
+                                <ComboBox x:Name="SourceFilter" SelectionChanged="Filter_Changed"/>
+                            </StackPanel>
+                        </Grid>
+                    </StackPanel>
+
+                    <ListBox x:Name="QuestList" SelectionChanged="QuestList_SelectionChanged" Background="#0f1216" BorderBrush="{StaticResource BorderBrushSoft}" Foreground="{StaticResource TextBrush}">
+                        <ListBox.ItemTemplate>
+                            <DataTemplate>
+                                <Border Padding="8" BorderBrush="#27313b" BorderThickness="0,0,0,1">
+                                    <StackPanel>
+                                        <TextBlock Text="{Binding DisplayName}" FontWeight="SemiBold" TextWrapping="Wrap"/>
+                                        <TextBlock Text="{Binding Id}" Foreground="{StaticResource MutedBrush}" FontFamily="Consolas" FontSize="11"/>
+                                        <StackPanel Orientation="Horizontal" Margin="0,4,0,0">
+                                            <TextBlock Text="{Binding TraderName}" Foreground="{StaticResource MutedBrush}"/>
+                                            <TextBlock Text="  |  " Foreground="{StaticResource MutedBrush}"/>
+                                            <TextBlock Text="{Binding MapName}" Foreground="{StaticResource MutedBrush}"/>
+                                            <TextBlock Text="  |  " Foreground="{StaticResource MutedBrush}"/>
+                                            <TextBlock Text="{Binding Type}" Foreground="{StaticResource MutedBrush}"/>
+                                        </StackPanel>
+                                    </StackPanel>
+                                </Border>
+                            </DataTemplate>
+                        </ListBox.ItemTemplate>
+                    </ListBox>
+                </DockPanel>
+            </Border>
+
+            <Border Grid.Column="2" Background="{StaticResource PanelBrush}" BorderBrush="{StaticResource BorderBrushSoft}" BorderThickness="1" Padding="12">
+                <DockPanel>
+                    <Grid DockPanel.Dock="Top" Margin="0,0,0,12">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+                        <StackPanel>
+                            <TextBlock x:Name="SelectedTitle" Text="No quest selected" FontSize="20" FontWeight="SemiBold"/>
+                            <TextBlock x:Name="SelectedSubtitle" Text="Load or create a quest to begin." Foreground="{StaticResource MutedBrush}" Margin="0,4,0,0"/>
+                        </StackPanel>
+                        <Button Grid.Column="1" Content="Apply Form To JSON" Click="ApplyForm_Click" VerticalAlignment="Center"/>
+                    </Grid>
+
+                    <TabControl>
+                        <TabItem Header="Overview">
+                            <ScrollViewer VerticalScrollBarVisibility="Auto">
+                                <Grid Margin="6">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="12"/>
+                                        <ColumnDefinition Width="*"/>
+                                    </Grid.ColumnDefinitions>
+                                    <Grid.RowDefinitions>
+                                        <RowDefinition Height="Auto"/>
+                                        <RowDefinition Height="Auto"/>
+                                        <RowDefinition Height="Auto"/>
+                                        <RowDefinition Height="Auto"/>
+                                        <RowDefinition Height="Auto"/>
+                                        <RowDefinition Height="Auto"/>
+                                        <RowDefinition Height="Auto"/>
+                                    </Grid.RowDefinitions>
+                                    <StackPanel Grid.Row="0">
+                                        <Label Content="Quest ID"/>
+                                        <TextBox x:Name="QuestIdBox" FontFamily="Consolas"/>
+                                    </StackPanel>
+                                    <StackPanel Grid.Row="0" Grid.Column="2">
+                                        <Label Content="QuestName"/>
+                                        <TextBox x:Name="QuestNameBox"/>
+                                    </StackPanel>
+                                    <StackPanel Grid.Row="1" Margin="0,8,0,0">
+                                        <Label Content="Name locale key"/>
+                                        <TextBox x:Name="NameKeyBox"/>
+                                    </StackPanel>
+                                    <StackPanel Grid.Row="1" Grid.Column="2" Margin="0,8,0,0">
+                                        <Label Content="Description locale key"/>
+                                        <TextBox x:Name="DescriptionKeyBox"/>
+                                    </StackPanel>
+                                    <StackPanel Grid.Row="2" Margin="0,8,0,0">
+                                        <Label Content="Trader ID"/>
+                                        <ComboBox x:Name="TraderIdBox" IsEditable="True"/>
+                                    </StackPanel>
+                                    <StackPanel Grid.Row="2" Grid.Column="2" Margin="0,8,0,0">
+                                        <Label Content="Location"/>
+                                        <ComboBox x:Name="LocationBox" IsEditable="True"/>
+                                    </StackPanel>
+                                    <StackPanel Grid.Row="3" Margin="0,8,0,0">
+                                        <Label Content="Quest Type"/>
+                                        <ComboBox x:Name="QuestTypeBox" IsEditable="True"/>
+                                    </StackPanel>
+                                    <StackPanel Grid.Row="3" Grid.Column="2" Margin="0,8,0,0">
+                                        <Label Content="Side"/>
+                                        <ComboBox x:Name="SideBox" IsEditable="True"/>
+                                    </StackPanel>
+                                    <StackPanel Grid.Row="4" Grid.ColumnSpan="3" Margin="0,8,0,0">
+                                        <Label Content="Image path"/>
+                                        <TextBox x:Name="ImageBox"/>
+                                    </StackPanel>
+                                    <Grid Grid.Row="5" Grid.ColumnSpan="3" Margin="0,14,0,0">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="Auto"/>
+                                            <ColumnDefinition Width="24"/>
+                                            <ColumnDefinition Width="Auto"/>
+                                            <ColumnDefinition Width="24"/>
+                                            <ColumnDefinition Width="Auto"/>
+                                            <ColumnDefinition Width="24"/>
+                                            <ColumnDefinition Width="Auto"/>
+                                        </Grid.ColumnDefinitions>
+                                        <CheckBox x:Name="NotificationsCheck" Content="Notifications" Foreground="{StaticResource TextBrush}"/>
+                                        <CheckBox x:Name="RestartableCheck" Grid.Column="2" Content="Restartable" Foreground="{StaticResource TextBrush}"/>
+                                        <CheckBox x:Name="InstantCompleteCheck" Grid.Column="4" Content="Instant Complete" Foreground="{StaticResource TextBrush}"/>
+                                        <CheckBox x:Name="SecretQuestCheck" Grid.Column="6" Content="Secret Quest" Foreground="{StaticResource TextBrush}"/>
+                                    </Grid>
+                                    <StackPanel Grid.Row="6" Grid.ColumnSpan="3" Margin="0,14,0,0">
+                                        <Label Content="Objectives from Tarkynator task data"/>
+                                        <ItemsControl x:Name="ObjectivesList">
+                                            <ItemsControl.ItemTemplate>
+                                                <DataTemplate>
+                                                    <TextBlock Text="{Binding Text}" TextWrapping="Wrap" Margin="0,0,0,6"/>
+                                                </DataTemplate>
+                                            </ItemsControl.ItemTemplate>
+                                        </ItemsControl>
+                                    </StackPanel>
+                                </Grid>
+                            </ScrollViewer>
+                        </TabItem>
+
+                        <TabItem Header="Conditions">
+                            <DockPanel Margin="6">
+                                <Border DockPanel.Dock="Top" Background="{StaticResource PanelAltBrush}" BorderBrush="{StaticResource BorderBrushSoft}" BorderThickness="1" Padding="10" Margin="0,0,0,10">
+                                    <Grid>
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="150"/>
+                                            <ColumnDefinition Width="150"/>
+                                            <ColumnDefinition Width="*"/>
+                                            <ColumnDefinition Width="110"/>
+                                            <ColumnDefinition Width="Auto"/>
+                                        </Grid.ColumnDefinitions>
+                                        <StackPanel>
+                                            <Label Content="Phase"/>
+                                            <ComboBox x:Name="ConditionPhaseBox"/>
+                                        </StackPanel>
+                                        <StackPanel Grid.Column="1" Margin="8,0,0,0">
+                                            <Label Content="Preset"/>
+                                            <ComboBox x:Name="ConditionPresetBox" SelectionChanged="ConditionPresetBox_SelectionChanged"/>
+                                        </StackPanel>
+                                        <StackPanel Grid.Column="2" Margin="8,0,0,0">
+                                            <Label x:Name="ConditionTargetLabel" Content="Target"/>
+                                            <TextBox x:Name="ConditionTargetBox"/>
+                                        </StackPanel>
+                                        <StackPanel Grid.Column="3" Margin="8,0,0,0">
+                                            <Label x:Name="ConditionValueLabel" Content="Value"/>
+                                            <TextBox x:Name="ConditionValueBox"/>
+                                        </StackPanel>
+                                        <Button Grid.Column="4" Content="Add" Click="AddCondition_Click" VerticalAlignment="Bottom" Margin="8,0,0,0"/>
+                                    </Grid>
+                                </Border>
+                                <DataGrid x:Name="ConditionsGrid" ItemsSource="{Binding}" SelectionMode="Single">
+                                    <DataGrid.Columns>
+                                        <DataGridTextColumn Header="Phase" Binding="{Binding Phase}" Width="150"/>
+                                        <DataGridTextColumn Header="Type" Binding="{Binding Type}" Width="170"/>
+                                        <DataGridTextColumn Header="Summary" Binding="{Binding Summary}" Width="*"/>
+                                        <DataGridTextColumn Header="ID" Binding="{Binding Id}" Width="190"/>
+                                    </DataGrid.Columns>
+                                </DataGrid>
+                            </DockPanel>
+                        </TabItem>
+
+                        <TabItem Header="Rewards">
+                            <DockPanel Margin="6">
+                                <Border DockPanel.Dock="Top" Background="{StaticResource PanelAltBrush}" BorderBrush="{StaticResource BorderBrushSoft}" BorderThickness="1" Padding="10" Margin="0,0,0,10">
+                                    <Grid>
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="150"/>
+                                            <ColumnDefinition Width="150"/>
+                                            <ColumnDefinition Width="*"/>
+                                            <ColumnDefinition Width="110"/>
+                                            <ColumnDefinition Width="Auto"/>
+                                        </Grid.ColumnDefinitions>
+                                        <StackPanel>
+                                            <Label Content="Phase"/>
+                                            <ComboBox x:Name="RewardPhaseBox"/>
+                                        </StackPanel>
+                                        <StackPanel Grid.Column="1" Margin="8,0,0,0">
+                                            <Label Content="Type"/>
+                                            <ComboBox x:Name="RewardTypeBox" SelectionChanged="RewardTypeBox_SelectionChanged"/>
+                                        </StackPanel>
+                                        <StackPanel Grid.Column="2" Margin="8,0,0,0">
+                                            <Label x:Name="RewardTargetLabel" Content="Target"/>
+                                            <TextBox x:Name="RewardTargetBox"/>
+                                        </StackPanel>
+                                        <StackPanel Grid.Column="3" Margin="8,0,0,0">
+                                            <Label x:Name="RewardValueLabel" Content="Value"/>
+                                            <TextBox x:Name="RewardValueBox"/>
+                                        </StackPanel>
+                                        <Button Grid.Column="4" Content="Add" Click="AddReward_Click" VerticalAlignment="Bottom" Margin="8,0,0,0"/>
+                                    </Grid>
+                                </Border>
+                                <DataGrid x:Name="RewardsGrid" ItemsSource="{Binding}" SelectionMode="Single">
+                                    <DataGrid.Columns>
+                                        <DataGridTextColumn Header="Phase" Binding="{Binding Phase}" Width="150"/>
+                                        <DataGridTextColumn Header="Type" Binding="{Binding Type}" Width="170"/>
+                                        <DataGridTextColumn Header="Summary" Binding="{Binding Summary}" Width="*"/>
+                                        <DataGridTextColumn Header="ID" Binding="{Binding Id}" Width="190"/>
+                                    </DataGrid.Columns>
+                                </DataGrid>
+                            </DockPanel>
+                        </TabItem>
+                    </TabControl>
+                </DockPanel>
+            </Border>
+
+            <Border Grid.Column="4" Background="{StaticResource PanelBrush}" BorderBrush="{StaticResource BorderBrushSoft}" BorderThickness="1" Padding="12">
+                <DockPanel>
+                    <Grid DockPanel.Dock="Top" Margin="0,0,0,8">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+                        <TextBlock Text="Generated Quest JSON" FontSize="18" FontWeight="SemiBold"/>
+                        <Button Grid.Column="1" Content="Apply Raw JSON" Click="ApplyRawJson_Click"/>
+                    </Grid>
+                    <TextBox x:Name="JsonPreviewBox" FontFamily="Consolas" FontSize="12" AcceptsReturn="True" AcceptsTab="True"
+                             VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Auto" TextWrapping="NoWrap"/>
+                </DockPanel>
+            </Border>
+        </Grid>
+    </DockPanel>
+</Window>
