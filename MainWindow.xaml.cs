@@ -78,7 +78,23 @@ public partial class MainWindow : Window
 
         ConditionPhaseBox.ItemsSource = new[] { "AvailableForStart", "AvailableForFinish", "Started", "Success", "Fail" };
         ConditionPhaseBox.SelectedIndex = 0;
-        ConditionPresetBox.ItemsSource = new[] { "Level", "Quest", "HandoverItem", "KillTarget" };
+        ConditionPresetBox.ItemsSource = new[]
+        {
+            "Level",
+            "Quest",
+            "HandoverItem",
+            "FindItem",
+            "LeaveItemAtLocation",
+            "PlaceBeacon",
+            "VisitPlace",
+            "VisitPlaceCounter",
+            "SurviveLocation",
+            "KillTarget",
+            "Skill",
+            "TraderLoyalty",
+            "TraderStanding",
+            "SellItemToTrader",
+        };
         ConditionPresetBox.SelectedIndex = 0;
 
         RewardPhaseBox.ItemsSource = new[] { "Success", "Started", "Fail" };
@@ -269,19 +285,49 @@ public partial class MainWindow : Window
             "Level" => "Target",
             "Quest" => "Quest ID",
             "HandoverItem" => "Item tpl",
+            "FindItem" => "Item tpl",
+            "LeaveItemAtLocation" => "Item tpl",
+            "PlaceBeacon" => "Beacon tpl",
+            "VisitPlace" => "Place ID",
+            "VisitPlaceCounter" => "Place ID",
+            "SurviveLocation" => "Location",
             "KillTarget" => "Target role",
+            "Skill" => "Skill",
+            "TraderLoyalty" => "Trader ID",
+            "TraderStanding" => "Trader ID",
+            "SellItemToTrader" => "Item tpl(s)",
             _ => "Target",
         };
         ConditionValueLabel.Content = preset switch
         {
             "Quest" => "Status",
+            "FindItem" => "Count",
+            "LeaveItemAtLocation" => "Count",
+            "PlaceBeacon" => "Count",
+            "VisitPlace" => "Value",
+            "VisitPlaceCounter" => "Count",
+            "SurviveLocation" => "Raid count",
             "KillTarget" => "Kill count",
+            "Skill" => "Level",
+            "TraderLoyalty" => "Level",
+            "TraderStanding" => "Standing",
+            "SellItemToTrader" => "Count / money",
             _ => "Value",
+        };
+        ConditionExtraLabel.Content = preset switch
+        {
+            "LeaveItemAtLocation" => "Zone ID | plantTime",
+            "PlaceBeacon" => "Zone ID | plantTime",
+            "SurviveLocation" => "Exit statuses",
+            "SellItemToTrader" => "Trader ID",
+            _ => "Extra",
         };
         ConditionTargetBox.Text = preset switch
         {
             "Level" => "player",
+            "SurviveLocation" => "Woods",
             "KillTarget" => "Savage",
+            "Skill" => "Sniper",
             _ => ConditionTargetBox.Text,
         };
         ConditionValueBox.Text = preset switch
@@ -289,8 +335,26 @@ public partial class MainWindow : Window
             "Level" => "1",
             "Quest" => "4",
             "HandoverItem" => "1",
+            "FindItem" => "1",
+            "LeaveItemAtLocation" => "1",
+            "PlaceBeacon" => "1",
+            "VisitPlace" => "1",
+            "VisitPlaceCounter" => "1",
+            "SurviveLocation" => "1",
             "KillTarget" => "1",
+            "Skill" => "1",
+            "TraderLoyalty" => "1",
+            "TraderStanding" => "0",
+            "SellItemToTrader" => "1",
             _ => ConditionValueBox.Text,
+        };
+        ConditionExtraBox.Text = preset switch
+        {
+            "LeaveItemAtLocation" => string.IsNullOrWhiteSpace(ConditionExtraBox.Text) ? "zone_id|30" : ConditionExtraBox.Text,
+            "PlaceBeacon" => string.IsNullOrWhiteSpace(ConditionExtraBox.Text) ? "zone_id|30" : ConditionExtraBox.Text,
+            "SurviveLocation" => "Survived,Runner,Transit",
+            "SellItemToTrader" => string.IsNullOrWhiteSpace(ConditionExtraBox.Text) ? "54cb50c76803fa8b248b4571" : ConditionExtraBox.Text,
+            _ => ConditionExtraBox.Text,
         };
     }
 
@@ -334,7 +398,8 @@ public partial class MainWindow : Window
         var preset = ConditionPresetBox.SelectedItem?.ToString() ?? "Level";
         var target = ConditionTargetBox.Text.Trim();
         var valueText = ConditionValueBox.Text.Trim();
-        var condition = CreateCondition(preset, target, valueText);
+        var extraText = ConditionExtraBox.Text.Trim();
+        var condition = CreateCondition(preset, target, valueText, extraText);
         GetConditionArray(_selectedQuest.Json, phase).Add(condition);
         UpdateRecordFromJson(_selectedQuest);
         PopulateConditionRows(_selectedQuest);
@@ -724,10 +789,10 @@ public partial class MainWindow : Window
         return quest;
     }
 
-    private JsonObject CreateCondition(string preset, string target, string valueText)
+    private JsonObject CreateCondition(string preset, string target, string valueText, string extraText = "")
     {
         var id = MongoIdGenerator.NewId();
-        var value = ParseDouble(valueText, preset == "Level" || preset == "HandoverItem" || preset == "KillTarget" ? 1 : 4);
+        var value = ParseDouble(valueText, preset == "Quest" ? 4 : 1);
 
         return preset switch
         {
@@ -745,78 +810,220 @@ public partial class MainWindow : Window
                 ["target"] = target,
                 ["visibilityConditions"] = new JsonArray(),
             },
-            "HandoverItem" => new JsonObject
-            {
-                ["conditionType"] = "HandoverItem",
-                ["dogtagLevel"] = 0,
-                ["dynamicLocale"] = false,
-                ["globalQuestCounterId"] = string.Empty,
-                ["id"] = id,
-                ["index"] = 0,
-                ["isEncoded"] = false,
-                ["maxDurability"] = 100,
-                ["minDurability"] = 0,
-                ["onlyFoundInRaid"] = false,
-                ["parentId"] = string.Empty,
-                ["target"] = new JsonArray(target),
-                ["value"] = value,
-                ["visibilityConditions"] = new JsonArray(),
-            },
-            "KillTarget" => new JsonObject
-            {
-                ["completeInSeconds"] = 0,
-                ["conditionType"] = "CounterCreator",
-                ["counter"] = new JsonObject
+            "HandoverItem" => CreateItemCondition("HandoverItem", id, target, value, false),
+            "FindItem" => CreateItemCondition("FindItem", id, target, value, countInRaid: false),
+            "LeaveItemAtLocation" => CreatePlacementCondition("LeaveItemAtLocation", id, target, value, extraText),
+            "PlaceBeacon" => CreatePlacementCondition("PlaceBeacon", id, target, value, extraText, includeDurability: false),
+            "VisitPlace" => CreateDirectVisitPlaceCondition(id, target, value),
+            "VisitPlaceCounter" => CreateCounterCreator(
+                id,
+                "Exploration",
+                value,
+                new JsonObject
                 {
-                    ["conditions"] = new JsonArray(new JsonObject
-                    {
-                        ["bodyPart"] = new JsonArray(),
-                        ["compareMethod"] = ">=",
-                        ["conditionType"] = "Kills",
-                        ["daytime"] = new JsonObject { ["from"] = 0, ["to"] = 0 },
-                        ["distance"] = new JsonObject { ["compareMethod"] = ">=", ["value"] = 0 },
-                        ["dynamicLocale"] = false,
-                        ["enemyEquipmentExclusive"] = new JsonArray(),
-                        ["enemyEquipmentInclusive"] = new JsonArray(),
-                        ["enemyHealthEffects"] = new JsonArray(),
-                        ["id"] = MongoIdGenerator.NewId(),
-                        ["resetOnSessionEnd"] = false,
-                        ["savageRole"] = new JsonArray(),
-                        ["target"] = string.IsNullOrWhiteSpace(target) ? "Savage" : target,
-                        ["value"] = 1,
-                        ["weapon"] = new JsonArray(),
-                        ["weaponCaliber"] = new JsonArray(),
-                        ["weaponModsExclusive"] = new JsonArray(),
-                        ["weaponModsInclusive"] = new JsonArray(),
-                    }),
+                    ["conditionType"] = "VisitPlace",
+                    ["dynamicLocale"] = false,
                     ["id"] = MongoIdGenerator.NewId(),
+                    ["target"] = string.IsNullOrWhiteSpace(target) ? "place_id" : target,
+                    ["value"] = 1,
+                }),
+            "SurviveLocation" => CreateCounterCreator(
+                id,
+                "Exploration",
+                value,
+                new JsonObject
+                {
+                    ["conditionType"] = "Location",
+                    ["dynamicLocale"] = false,
+                    ["id"] = MongoIdGenerator.NewId(),
+                    ["target"] = ToJsonArray(SplitList(target, "Woods")),
                 },
-                ["doNotResetIfCounterCompleted"] = false,
-                ["dynamicLocale"] = false,
-                ["globalQuestCounterId"] = string.Empty,
-                ["id"] = id,
-                ["index"] = 0,
-                ["isNecessary"] = false,
-                ["isResetOnConditionFailed"] = false,
-                ["oneSessionOnly"] = false,
-                ["parentId"] = string.Empty,
-                ["type"] = "Elimination",
-                ["value"] = value,
-                ["visibilityConditions"] = new JsonArray(),
-            },
-            _ => new JsonObject
-            {
-                ["compareMethod"] = ">=",
-                ["conditionType"] = "Level",
-                ["dynamicLocale"] = false,
-                ["globalQuestCounterId"] = string.Empty,
-                ["id"] = id,
-                ["index"] = 0,
-                ["parentId"] = string.Empty,
-                ["value"] = value,
-                ["visibilityConditions"] = new JsonArray(),
-            },
+                new JsonObject
+                {
+                    ["conditionType"] = "ExitStatus",
+                    ["dynamicLocale"] = false,
+                    ["id"] = MongoIdGenerator.NewId(),
+                    ["status"] = ToJsonArray(SplitList(extraText, "Survived", "Runner", "Transit")),
+                }),
+            "KillTarget" => CreateCounterCreator(
+                id,
+                "Elimination",
+                value,
+                new JsonObject
+                {
+                    ["bodyPart"] = new JsonArray(),
+                    ["compareMethod"] = ">=",
+                    ["conditionType"] = "Kills",
+                    ["daytime"] = new JsonObject { ["from"] = 0, ["to"] = 0 },
+                    ["distance"] = new JsonObject { ["compareMethod"] = ">=", ["value"] = 0 },
+                    ["dynamicLocale"] = false,
+                    ["enemyEquipmentExclusive"] = new JsonArray(),
+                    ["enemyEquipmentInclusive"] = new JsonArray(),
+                    ["enemyHealthEffects"] = new JsonArray(),
+                    ["id"] = MongoIdGenerator.NewId(),
+                    ["resetOnSessionEnd"] = false,
+                    ["savageRole"] = new JsonArray(),
+                    ["target"] = string.IsNullOrWhiteSpace(target) ? "Savage" : target,
+                    ["value"] = 1,
+                    ["weapon"] = new JsonArray(),
+                    ["weaponCaliber"] = new JsonArray(),
+                    ["weaponModsExclusive"] = new JsonArray(),
+                    ["weaponModsInclusive"] = new JsonArray(),
+                }),
+            "Skill" => CreateCompareCondition("Skill", id, target, value),
+            "TraderLoyalty" => CreateCompareCondition("TraderLoyalty", id, ExtractTraderId(target), value),
+            "TraderStanding" => CreateCompareCondition("TraderStanding", id, ExtractTraderId(target), value),
+            "SellItemToTrader" => CreateSellItemToTraderCondition(id, target, value, extraText),
+            _ => CreateCompareCondition("Level", id, string.Empty, value, includeTarget: false),
         };
+    }
+
+    private static JsonObject CreateCompareCondition(
+        string conditionType,
+        string id,
+        string target,
+        double value,
+        string compareMethod = ">=",
+        bool includeTarget = true)
+    {
+        var condition = new JsonObject
+        {
+            ["compareMethod"] = compareMethod,
+            ["conditionType"] = conditionType,
+            ["dynamicLocale"] = false,
+            ["globalQuestCounterId"] = string.Empty,
+            ["id"] = id,
+            ["index"] = 0,
+            ["parentId"] = string.Empty,
+            ["value"] = value,
+            ["visibilityConditions"] = new JsonArray(),
+        };
+
+        if (includeTarget)
+        {
+            condition["target"] = target;
+        }
+
+        return condition;
+    }
+
+    private static JsonObject CreateItemCondition(string conditionType, string id, string target, double value, bool countInRaid)
+    {
+        var condition = new JsonObject
+        {
+            ["conditionType"] = conditionType,
+            ["dogtagLevel"] = 0,
+            ["dynamicLocale"] = false,
+            ["globalQuestCounterId"] = string.Empty,
+            ["id"] = id,
+            ["index"] = 0,
+            ["isEncoded"] = false,
+            ["maxDurability"] = 100,
+            ["minDurability"] = 0,
+            ["onlyFoundInRaid"] = false,
+            ["parentId"] = string.Empty,
+            ["target"] = ToJsonArray(SplitList(target, "item_tpl")),
+            ["value"] = value,
+            ["visibilityConditions"] = new JsonArray(),
+        };
+
+        if (conditionType == "FindItem")
+        {
+            condition["countInRaid"] = countInRaid;
+        }
+
+        return condition;
+    }
+
+    private static JsonObject CreatePlacementCondition(
+        string conditionType,
+        string id,
+        string target,
+        double value,
+        string extraText,
+        bool includeDurability = true)
+    {
+        var zone = ParseZoneAndPlantTime(extraText);
+        var condition = new JsonObject
+        {
+            ["conditionType"] = conditionType,
+            ["dynamicLocale"] = false,
+            ["globalQuestCounterId"] = string.Empty,
+            ["id"] = id,
+            ["index"] = 0,
+            ["parentId"] = string.Empty,
+            ["plantTime"] = zone.PlantTime,
+            ["target"] = ToJsonArray(SplitList(target, "item_tpl")),
+            ["value"] = value,
+            ["visibilityConditions"] = new JsonArray(),
+            ["zoneId"] = zone.ZoneId,
+        };
+
+        if (includeDurability)
+        {
+            condition["dogtagLevel"] = 0;
+            condition["isEncoded"] = false;
+            condition["maxDurability"] = 100;
+            condition["minDurability"] = 0;
+            condition["onlyFoundInRaid"] = false;
+        }
+
+        return condition;
+    }
+
+    private static JsonObject CreateDirectVisitPlaceCondition(string id, string target, double value)
+    {
+        return new JsonObject
+        {
+            ["conditionType"] = "VisitPlace",
+            ["dynamicLocale"] = false,
+            ["globalQuestCounterId"] = string.Empty,
+            ["id"] = id,
+            ["index"] = 0,
+            ["parentId"] = string.Empty,
+            ["target"] = string.IsNullOrWhiteSpace(target) ? "place_id" : target,
+            ["value"] = value,
+            ["visibilityConditions"] = new JsonArray(),
+        };
+    }
+
+    private static JsonObject CreateCounterCreator(string id, string questType, double value, params JsonObject[] counterConditions)
+    {
+        var conditions = new JsonArray();
+        foreach (var condition in counterConditions)
+        {
+            conditions.Add(condition);
+        }
+
+        return new JsonObject
+        {
+            ["completeInSeconds"] = 0,
+            ["conditionType"] = "CounterCreator",
+            ["counter"] = new JsonObject
+            {
+                ["conditions"] = conditions,
+                ["id"] = MongoIdGenerator.NewId(),
+            },
+            ["doNotResetIfCounterCompleted"] = false,
+            ["dynamicLocale"] = false,
+            ["globalQuestCounterId"] = string.Empty,
+            ["id"] = id,
+            ["index"] = 0,
+            ["isNecessary"] = false,
+            ["isResetOnConditionFailed"] = false,
+            ["oneSessionOnly"] = false,
+            ["parentId"] = string.Empty,
+            ["type"] = questType,
+            ["value"] = value,
+            ["visibilityConditions"] = new JsonArray(),
+        };
+    }
+
+    private static JsonObject CreateSellItemToTraderCondition(string id, string target, double value, string traderId)
+    {
+        var condition = CreateItemCondition("SellItemToTrader", id, target, value, countInRaid: false);
+        condition["traderId"] = string.IsNullOrWhiteSpace(traderId) ? "54cb50c76803fa8b248b4571" : ExtractTraderId(traderId);
+        return condition;
     }
 
     private JsonObject CreateReward(string type, string target, string valueText)
@@ -952,6 +1159,11 @@ public partial class MainWindow : Window
             return $"Counter {GetString(first, "conditionType")} target={first?["target"]?.ToJsonString()} value={value}";
         }
 
+        if (type == "LeaveItemAtLocation")
+        {
+            return $"{type} target={target} value={value} zoneId={GetString(condition, "zoneId")} plantTime={GetDouble(condition, "plantTime")}";
+        }
+
         return $"{type} target={target} value={value}";
     }
 
@@ -1035,6 +1247,34 @@ public partial class MainWindow : Window
     private static double ParseDouble(string text, double fallback)
     {
         return double.TryParse(text, NumberStyles.Float, CultureInfo.InvariantCulture, out var result) ? result : fallback;
+    }
+
+    private static (string ZoneId, double PlantTime) ParseZoneAndPlantTime(string text)
+    {
+        var parts = text.Split('|', 2, StringSplitOptions.TrimEntries);
+        var zoneId = parts.Length > 0 && !string.IsNullOrWhiteSpace(parts[0]) ? parts[0] : "zone_id";
+        var plantTime = parts.Length > 1 ? ParseDouble(parts[1], 30) : 30;
+        return (zoneId, plantTime);
+    }
+
+    private static IReadOnlyList<string> SplitList(string text, params string[] fallback)
+    {
+        var values = text.Split([',', ';'], StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+            .Where(x => !string.IsNullOrWhiteSpace(x))
+            .ToList();
+
+        return values.Count > 0 ? values : fallback;
+    }
+
+    private static JsonArray ToJsonArray(IEnumerable<string> values)
+    {
+        var array = new JsonArray();
+        foreach (var value in values)
+        {
+            array.Add(value);
+        }
+
+        return array;
     }
 }
 

@@ -236,11 +236,11 @@
                                         <CheckBox x:Name="SecretQuestCheck" Grid.Column="6" Content="Secret Quest" Foreground="{StaticResource TextBrush}"/>
                                     </Grid>
                                     <StackPanel Grid.Row="6" Grid.ColumnSpan="3" Margin="0,14,0,0">
-                                        <Label Content="Objectives from Tarkynator task data"/>
+                                        <Label Content="Objectives from Tarkynator task data" Foreground="{StaticResource TextBrush}"/>
                                         <ItemsControl x:Name="ObjectivesList">
                                             <ItemsControl.ItemTemplate>
                                                 <DataTemplate>
-                                                    <TextBlock Text="{Binding Text}" TextWrapping="Wrap" Margin="0,0,0,6"/>
+                                                    <TextBlock Text="{Binding Text}" TextWrapping="Wrap" Margin="0,0,0,6" Foreground="{StaticResource TextBrush}"/>
                                                 </DataTemplate>
                                             </ItemsControl.ItemTemplate>
                                         </ItemsControl>
@@ -254,10 +254,11 @@
                                 <Border DockPanel.Dock="Top" Background="{StaticResource PanelAltBrush}" BorderBrush="{StaticResource BorderBrushSoft}" BorderThickness="1" Padding="10" Margin="0,0,0,10">
                                     <Grid>
                                         <Grid.ColumnDefinitions>
-                                            <ColumnDefinition Width="150"/>
+                                            <ColumnDefinition Width="130"/>
                                             <ColumnDefinition Width="150"/>
                                             <ColumnDefinition Width="*"/>
-                                            <ColumnDefinition Width="110"/>
+                                            <ColumnDefinition Width="95"/>
+                                            <ColumnDefinition Width="*"/>
                                             <ColumnDefinition Width="Auto"/>
                                         </Grid.ColumnDefinitions>
                                         <StackPanel>
@@ -276,7 +277,11 @@
                                             <Label x:Name="ConditionValueLabel" Content="Value"/>
                                             <TextBox x:Name="ConditionValueBox"/>
                                         </StackPanel>
-                                        <Button Grid.Column="4" Content="Add" Click="AddCondition_Click" VerticalAlignment="Bottom" Margin="8,0,0,0"/>
+                                        <StackPanel Grid.Column="4" Margin="8,0,0,0">
+                                            <Label x:Name="ConditionExtraLabel" Content="Extra"/>
+                                            <TextBox x:Name="ConditionExtraBox"/>
+                                        </StackPanel>
+                                        <Button Grid.Column="5" Content="Add" Click="AddCondition_Click" VerticalAlignment="Bottom" Margin="8,0,0,0"/>
                                     </Grid>
                                 </Border>
                                 <DataGrid x:Name="ConditionsGrid" ItemsSource="{Binding}" SelectionMode="Single">
